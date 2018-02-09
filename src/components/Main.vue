@@ -1,5 +1,5 @@
 <template>
-	<div style="padding: 10px;">
+	<div style="padding: 10px;" id="content">
 		<div class="notice">
 			<div style="margin: -10px; margin-bottom: 0px; overflow: hidden;">
 				<masker>
@@ -10,7 +10,7 @@
 						</div>
 						<div class="m-notice">
 							<marquee>
-								<marquee-item v-for="i in 5" :key="i" @click.native="onClick(i)" class="align-middle">hello world {{i}}</marquee-item>
+								<marquee-item v-for="i in 5" :key="i" @click.native="onClick(i)" class="align-middle">滚动 {{i}}</marquee-item>
 							</marquee>
 						</div>
 					</div>
@@ -18,17 +18,24 @@
 			</div>
 		</div>
 		<div class="content">
-			<card :header="{title: '111111' }" :footer="{title: '更多',link:'/article'}">
-				<p slot="content" class="card-padding">{{ 'sasasa' }}</p>
-			</card>
-			<card :header="{title: '22222' }" :footer="{title: '更多',link:'/article'}">
-				<p slot="content" class="card-padding">{{ ' 我用的是vux起的一个项目（移动端，基于vue的），因为是移动端的，需要在手机上测试，发现用http://localhost:8081/访问的挺好的，但是换到ip就访问不了，期初我以为是代理的原因，将电脑的代理给关掉了。还是不行，然后改为127.0.0.1访问，发现可以访问，用0.0.0.0访问也可以，就是ip不行。然后就各种google，百度。别人家的方法---都试了好多，发现没效（有点怀疑人生，怀疑是不是我电脑的问题），但是结果就在这，ip就是不可以访问！！！！' }}</p>
-			</card>
-			<card :header="{title: '3333' }" :footer="{title: '更多',link:'/component/panel'}">
-				<p slot="content" class="card-padding">{{ 'sasasa' }}</p>
-			</card>
-			<p v-for="item in 100">{{item}}</p>
+			<div v-for="item of articleList">
+				<card :header="{title: item.title.rendered }" :footer="{title: '阅读全文',link:'/article/?id=' + item.id}">
+					<div slot="content" class="card-padding">
+						<cate-list :cate="item.categories" :pubDate="item.date" :author="item.author"></cate-list>
+						<p v-html="item.excerpt.rendered"></p>
+					</div>
+				</card>
+			</div>
 		</div>
+		<p class="pagging">
+			<span style="float: left;" v-if="page != 1">
+					<x-button mini @click.native="changePage('up')"><i class="fa fa-angle-left" aria-hidden="true"></i>上一页</x-button>
+				</span>
+			<span style="float: right;" v-if="!lastPage">
+					<x-button mini @click.native="changePage">下一页<i class="fa fa-angle-right" aria-hidden="true"></i></x-button>
+				</span>
+		</p>
+		<divider>我是有底线的</divider>
 	</div>
 </template>
 
@@ -37,13 +44,25 @@
 		Masker,
 		Marquee,
 		Card,
-		MarqueeItem
-	} from 'vux'
+		MarqueeItem,
+		Divider,
+		XButton
+	} from 'vux';
+	import CateList from './CateList.vue';
+	import {
+		mapActions,
+		mapState,
+		mapGetters
+	} from 'vuex';
 	export default {
-		name: 'HelloWorld1111',
+		name: 'main-cont',
 		data() {
 			return {
-				title: '欢迎你啦',
+				page: 1,
+				lastPage: false,
+				articleList: [],
+				cateList: [],
+				title: '灵魂守护者',
 				notice: {
 					title: '111',
 					img: '/src/assets/vux_logo.png'
@@ -54,7 +73,42 @@
 			Masker,
 			Marquee,
 			Card,
-			MarqueeItem
+			MarqueeItem,
+			CateList,
+			Divider,
+			XButton
+		},
+		mounted() {
+			this.initArticleList();
+		},
+		computed: {
+		},
+		methods: {
+			async initArticleList() {
+				const res = await this.$http.get('/api/posts?page=' + this.page);
+				// console.log(res);
+				if (res.status == 200) {
+					this.articleList = res.data;
+					if(this.articleList.length < 10) {
+						this.lastPage = true;
+					} else {
+						this.lastPage = false;
+					}
+					document.getElementById('vux_view_box_body').scrollTop = 0;
+				}
+			},
+			linkToArticle(id) {
+				console.log(id)
+			},
+			//切换页码
+			changePage(flag) {
+				if(flag == 'up' && this.page != 1) {
+					this.page -= 1;
+				} else {
+					this.page += 1;
+				}
+				this.initArticleList();
+			}
 		}
 	}
 </script>
@@ -70,7 +124,7 @@
 	.m-title {
 		padding: 10px 20px;
 		font-size: 26px;
-		letter-spacing: 8px;
+		letter-spacing: 1px;
 	}
 	.m-img {
 		padding-bottom: 33%;
@@ -104,7 +158,14 @@
 		margin-top: 5px;
 	}
 	.card-padding {
-		padding: 15px;
+		padding: 5px 15px 10px;
+	}
+	.pagging {
+		padding: 10px 15px;
+		height: 30px;
+	}
+	.pagging i {
+		padding: 0px 5px;
 	}
 </style>
 <style>
@@ -112,6 +173,12 @@
 		color: #555!important;
 		font-size: 16px!important;
 		font-weight: bold;
+	}
+	.weui-cell__bd {
+		text-align: right;
+	}
+	#vux_view_box_body {		
+		transition: all 11.3s ease;
 	}
 </style>
 

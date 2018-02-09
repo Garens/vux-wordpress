@@ -60,7 +60,20 @@
 			TabbarItem,
 			Group
 		},
-		methods: {}
+		beforeCreate() {
+			console.log(this.$store)
+			this.$store.dispatch('getCategorieList');
+			this.$store.dispatch('getUserList');
+		},
+		mounted() {
+		},
+		methods: {
+			initCategories() {
+				this.$store.dispatch('getCategorieList');
+				this.$store.dispatch('getUserList');
+				console.log(111)
+			}
+		}
 	}
 </script>
 
